@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  name          String?
+  email         String     @unique
+  password      String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  refreshTokens Token[]
+  progress      Progress[]
+}
+
+model Token {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WordRoot {
+  id          String    @id @default(uuid())
+  prefix      String    @unique
+  meaning     String
+  description String?
+  origin      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  words       Word[]
+  examples    Example[]
+}
+
+model Word {
+  id            String     @id @default(uuid())
+  term          String     @unique
+  definition    String
+  pronunciation String?
+  partOfSpeech  String?
+  example       String?
+  rootId        String
+  root          WordRoot   @relation(fields: [rootId], references: [id], onDelete: Cascade)
+  notes         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  progress      Progress[]
+}
+
+model Example {
+  id          String   @id @default(uuid())
+  text        String
+  translation String?
+  rootId      String
+  root        WordRoot @relation(fields: [rootId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Progress {
+  id           String    @id @default(uuid())
+  userId       String
+  wordId       String
+  familiarity  Int       @default(0) // 0-5 scale
+  lastReviewed DateTime  @default(now())
+  nextReview   DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word         Word      @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, wordId])
+}
