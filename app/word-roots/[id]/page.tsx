@@ -6,15 +6,17 @@ import { ArrowLeft } from "lucide-react";
 export const revalidate = 3600; // Revalidate every hour
 
 interface WordRootPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function WordRootPage({ params }: WordRootPageProps) {
+  const { id } = await params;
+
   const wordRoot = await db.wordRoot.findUnique({
     where: {
-      id: params.id,
+      id,
     },
     include: {
       words: {
@@ -98,14 +100,9 @@ export default async function WordRootPage({ params }: WordRootPageProps) {
             <p className="mt-3">{word.definition}</p>
 
             {word.example && (
-              <p className="mt-3 text-gray-700 italic">"{word.example}"</p>
-            )}
-
-            {word.notes && (
-              <p className="mt-4 text-sm text-gray-600 border-t pt-2">
-                <span className="font-medium">Ghi chú: </span>
-                {word.notes}
-              </p>
+              <div className="mt-3 p-3 bg-gray-50 rounded">
+                <p className="text-sm italic">"{word.example}"</p>
+              </div>
             )}
           </div>
         ))}
